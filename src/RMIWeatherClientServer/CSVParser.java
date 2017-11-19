@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Created by Empyreans on 29.10.2017.
@@ -14,25 +16,21 @@ import java.util.ArrayList;
 public class CSVParser {
 
     ArrayList<Day> availableDays = new ArrayList<>();
-    boolean isUpdated = false;
+    boolean needsUpdate = false;
     FileReader fileReader = null;
+    String fileName;
 
     public CSVParser(String fileName) {
 
-        try {
-            fileReader = new FileReader(fileName);
-            parseCSVFile();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        this.fileName = fileName;
+        parseCSVFile();
 
-        try {
-            fileReader = new FileReader(fileName);
-            updateCSVFile();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
+//        try {
+//            fileReader = new FileReader(fileName);
+//            updateCSVFile();
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        }
 //
 //        try (FileReader fileReader = new FileReader(fileName)) {
 //            parseCSVFile(fileReader);
@@ -44,6 +42,12 @@ public class CSVParser {
     }
 
     public void parseCSVFile() {
+
+        try {
+            fileReader = new FileReader(fileName);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
         CSVReader reader = new CSVReaderBuilder(fileReader).build();
         Day tempDay;
@@ -72,47 +76,26 @@ public class CSVParser {
 
     }
 
+    // return status and toggle needsUpdate
+    public boolean isUpdated(){
+        if (needsUpdate){
+            this.needsUpdate = !this.needsUpdate;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void updateCSVFile() {
 
-        CSVReader reader = new CSVReaderBuilder(fileReader).build();
-        String[] nextLine;
-
-//        try{
-//            nextLine = reader.readNext();
-//            System.out.println(nextLine[0]);
-//        } catch (IOException e){
-//            e.printStackTrace();
-//        }
-
-
-        int i = 0;
-
-//        for (Day day:availableDays) {
-//            try {
-//                while((nextLine = reader.readNext()) != null){
-//                    if (nextLine[0].equals(day.getDate())){
-//                        if (nextLine[2].equals(day.getWeatherDataList().get(i++).getCelsius())){
-//                            System.out.println("sup");
-//                        }
-//                    }
-//                }
-//            } catch (IOException e){
-//                e.printStackTrace();
-//            }
-//        }
-
-
-        for (Day day:availableDays) {
-            try{
-                while(( nextLine = reader.readNext()) != null && nextLine[0].equals(day.getDate())){
-                    System.out.println(nextLine[2]);
-                }
-
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-            System.out.println("soweitsogut");
+        try {
+            fileReader = new FileReader(fileName);
+        } catch (IOException e){
+            e.printStackTrace();
         }
+
+        CSVReader reader = new CSVReaderBuilder(fileReader).build();
+
 
 //        try {
 //            int i = 0;                                                                          // Zaehler dafuer dass die Zeilen weitergelesen werden koennen wenn ein neuer Tag in der CSV-Datei anfaengt, beginnt bei 0
@@ -123,7 +106,7 @@ public class CSVParser {
 //                    } else {
 //                        day.getWeatherDataList().get(i).setCelsius(nextLine[2]);
 //                        day.getWeatherDataList().get(i).setUpdated(true);
-//                        this.isUpdated = true;
+//                        this.needsUpdate = true;
 //                    }
 //                    i++;
 //                }
@@ -132,6 +115,51 @@ public class CSVParser {
 //        } catch (IOException e){
 //            e.printStackTrace();
 //        }
+
+
+        List daysfromCSV = new ArrayList<String[]>();
+        try {
+            daysfromCSV = reader.readAll();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        String[] tempString;
+        ListIterator csvIterator = daysfromCSV.listIterator();
+        while (csvIterator.hasNext()){
+            tempString = (String[])csvIterator.next();
+            compareWeatherData(tempString[0], tempString[1], tempString[2]);
+        }
+
+        for (Day day: availableDays) {
+            day.resetWeatherData();
+        }
+    }
+
+    private void compareWeatherData(String day, String time, String celsius){
+        Day tempDay = dayAvailabe(day);
+        if (tempDay != null){
+            for (WeatherData weatherData:tempDay.getWeatherDataList()) {
+                if (weatherData.getTime().equals(time) && weatherData.getCelsius().equals(celsius)){
+                    System.out.println("no update necessary");
+                    // placeholder
+                } else if (weatherData.getTime().equals(time) && !(weatherData.getCelsius().equals(celsius)) && !(weatherData.isUpdated())){
+                    System.out.println("update necessary");
+                    weatherData.setCelsius(celsius);
+                    weatherData.setUpdated(true);
+                    this.needsUpdate = true;
+                }
+            }
+        }
+    }
+
+    private Day dayAvailabe(String day){
+        for (Day d:availableDays){
+            if (d.getDate().equals(day)){
+                return d;
+            }
+        }
+        return null;
     }
 
     public String printDayWeatherData(String dayString) throws RemoteException {
@@ -142,33 +170,4 @@ public class CSVParser {
         return null;
     }
 
-    public Day dayAvailabe(String day){
-        for (Day d:availableDays){
-            if (d.getDate().equals(day)){
-                return d;
-            }
-        }
-        return null;
-    }
-
-    // return and toggle
-    public boolean checkUpdated(){
-        boolean tempUpdate = this.isUpdated;
-        this.isUpdated = !this.isUpdated;
-        return tempUpdate;
-    }
-
-//    public boolean checkConsistency(){
-//        boolean fileHasSameContent = false;
-//        try (FileReader fileReader = new FileReader(fileName)) {
-//            ArrayList<Day> availableDaysCurrent = parseCSVFile(fileReader);
-//            if (availableDaysCurrent.containsAll(availableDays)){
-//                System.out.println("The consistency of the .csv file has not changed");
-//                fileHasSameContent = true;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return fileHasSameContent;
-//    }
 }

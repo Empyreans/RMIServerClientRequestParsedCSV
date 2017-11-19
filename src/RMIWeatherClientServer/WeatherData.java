@@ -13,16 +13,16 @@ public class WeatherData {
         this.celsius = celsius;
     }
 
+    public boolean isUpdated() {
+        return updated;
+    }
+
     public void setUpdated(boolean b){
         updated = b;
     }
 
     public void setCelsius(String celsius) {
         this.celsius = celsius;
-    }
-
-    public boolean isUpdated() {
-        return updated;
     }
 
     public String getTime() {

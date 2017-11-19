@@ -23,6 +23,12 @@ public class Day {
         weatherDataList.add(new WeatherData(time,celsius));
     }
 
+    public void resetWeatherData(){
+        for (WeatherData weatherData:weatherDataList) {
+            weatherData.setUpdated(false);
+        }
+    }
+
     private String getAvgTemp(){
         float avgTempFloat = 0.0F;
         for (WeatherData weatherData : weatherDataList){
@@ -69,9 +75,9 @@ public class Day {
         stringBuilder.append("Minimaltemperatur: " + getLowestTemp()+"\n");
         for (WeatherData weatherData : weatherDataList){
             stringBuilder.append(String.format("%s %10s°\n" ,weatherData.getTime(), weatherData.getCelsius()));
-//            if (weatherData.isUpdated()){
-//                stringBuilder.append("neu");
-//            }
+            if (weatherData.isUpdated()){
+                stringBuilder.append("neu");
+            }
         }
         return stringBuilder.toString();
     }
