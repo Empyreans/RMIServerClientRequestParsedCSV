@@ -71,12 +71,11 @@ public class RMIServer extends Observable implements RMIServerInterface, Runnabl
     public void run() {
         try {
             while (true){
+                Thread.sleep(5000);
                 csvParser.updateCSVFile();
                 if (!clientVector.isEmpty() && !(csvParser.updatedDays.isEmpty())){
                     notifyObservers();
-                    break;
-                } else {
-                    Thread.sleep(5000);
+                    csvParser.resetUpdateStatus();
                 }
             }
         } catch (InterruptedException e){
