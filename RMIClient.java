@@ -1,4 +1,4 @@
-package RMIWeatherClientServer; /**
+ /**
  * Created by Empyreans on 15.11.2017.
  */
 
@@ -15,12 +15,12 @@ public class RMIClient implements RMIClientInterface {
     Scanner reader = new Scanner(System.in);
 
     public static void main(String[] args) {
-        RMIClient rmiClient = new RMIClient();
+        new RMIClient();
     }
 
     public RMIClient(){
         try {
-            execute();
+            connect();
         } catch (IOException e){
             e.printStackTrace();
         } catch (NotBoundException e){
@@ -28,7 +28,7 @@ public class RMIClient implements RMIClientInterface {
         }
     }
 
-    public void execute() throws RemoteException, NotBoundException{
+    public void connect() throws RemoteException, NotBoundException{
         Registry registry = LocateRegistry.getRegistry();
 
         // Callback-Spezifikationen

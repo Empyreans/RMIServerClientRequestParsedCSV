@@ -1,5 +1,3 @@
-package RMIWeatherClientServer;
-
 import com.opencsv.bean.CsvBindByName;
 
 import java.lang.reflect.Array;
@@ -23,6 +21,12 @@ public class Day {
         weatherDataList.add(new WeatherData(time,celsius));
     }
 
+    public void resetWeatherDataUpdateStatus(){
+        for (WeatherData weatherData:weatherDataList) {
+            weatherData.setUpdated(false);
+        }
+    }
+
     private String getAvgTemp(){
         float avgTempFloat = 0.0F;
         for (WeatherData weatherData : weatherDataList){
@@ -30,7 +34,7 @@ public class Day {
             avgTempFloat = avgTempFloat + celsiusFloat;
         }
         if (weatherDataList.size() > 1){
-            avgTempFloat = avgTempFloat / 2;
+            avgTempFloat = avgTempFloat / weatherDataList.size();
         }
         return Float.toString(avgTempFloat);
     }
@@ -68,10 +72,12 @@ public class Day {
         stringBuilder.append("Maximaltemperatur: " + getMaxTemp()+"\n");
         stringBuilder.append("Minimaltemperatur: " + getLowestTemp()+"\n");
         for (WeatherData weatherData : weatherDataList){
-            stringBuilder.append(String.format("%s %10s°\n" ,weatherData.getTime(), weatherData.getCelsius()));
-//            if (weatherData.isUpdated()){
-//                stringBuilder.append("neu");
-//            }
+            stringBuilder.append(String.format("%s %10s°" ,weatherData.getTime(), weatherData.getCelsius()));
+            if (weatherData.isUpdated()){
+                stringBuilder.append(" neu\n");
+            } else {
+                stringBuilder.append("\n");
+            }
         }
         return stringBuilder.toString();
     }
@@ -80,17 +86,4 @@ public class Day {
         return weatherDataList;
     }
 
-
-    public boolean compareWeatherDataList(ArrayList<WeatherData> weatherDataList){
-        if (this.weatherDataList.containsAll(weatherDataList)){
-            return true;
-        }
-        return false;
-    }
-
-//    public String isDayUpdated(Day day){
-//        for (WeatherData weatherData:weatherDataList) {
-//            weatherData.getCelsius().equals(day.)
-//        }
-//    }
 }

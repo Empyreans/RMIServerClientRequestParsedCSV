@@ -1,5 +1,3 @@
-package RMIWeatherClientServer;
-
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 
@@ -7,43 +5,34 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Created by Empyreans on 29.10.2017.
  */
 public class CSVParser {
 
-    ArrayList<Day> availableDays = new ArrayList<>();
-    boolean isUpdated = false;
-    FileReader fileReader = null;
+    private ArrayList<Day> availableDays = new ArrayList<>();
+    ArrayList<Day> updatedDays = new ArrayList<>();
+
+    private FileReader fileReader = null;
+    private String fileName;
 
     public CSVParser(String fileName) {
 
-        try {
-            fileReader = new FileReader(fileName);
-            parseCSVFile();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
-        try {
-            fileReader = new FileReader(fileName);
-            updateCSVFile();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
-//
-//        try (FileReader fileReader = new FileReader(fileName)) {
-//            parseCSVFile(fileReader);
-//            updateCSVFile(fileReader);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        this.fileName = fileName;
+        parseCSVFile();
 
     }
 
     public void parseCSVFile() {
+
+        try {
+            fileReader = new FileReader(fileName);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
         CSVReader reader = new CSVReaderBuilder(fileReader).build();
         Day tempDay;
@@ -72,66 +61,66 @@ public class CSVParser {
 
     }
 
+    // To-Do: Streamline
     public void updateCSVFile() {
+
+        // To-Do: Warum muss ich den FileReader neu initialisieren?
+        try {
+            fileReader = new FileReader(fileName);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
         CSVReader reader = new CSVReaderBuilder(fileReader).build();
         String[] nextLine;
 
-//        try{
-//            nextLine = reader.readNext();
-//            System.out.println(nextLine[0]);
-//        } catch (IOException e){
-//            e.printStackTrace();
-//        }
-
-
-        int i = 0;
-
-//        for (Day day:availableDays) {
-//            try {
-//                while((nextLine = reader.readNext()) != null){
-//                    if (nextLine[0].equals(day.getDate())){
-//                        if (nextLine[2].equals(day.getWeatherDataList().get(i++).getCelsius())){
-//                            System.out.println("sup");
-//                        }
-//                    }
-//                }
-//            } catch (IOException e){
-//                e.printStackTrace();
-//            }
-//        }
-
-
-        for (Day day:availableDays) {
-            try{
-                while(( nextLine = reader.readNext()) != null && nextLine[0].equals(day.getDate())){
-                    System.out.println(nextLine[2]);
-                }
-
-            } catch (IOException e){
-                e.printStackTrace();
+        try {
+            while ((nextLine = reader.readNext()) != null) {
+                compareWeatherData(nextLine[0], nextLine[1], nextLine[2]);
             }
-            System.out.println("soweitsogut");
+        } catch (IOException e){
+            e.printStackTrace();
         }
 
+//        // ruft fuer jede Zeile der CSV compareWeatherData() auf
+//        List daysfromCSV = new ArrayList<String[]>();
 //        try {
-//            int i = 0;                                                                          // Zaehler dafuer dass die Zeilen weitergelesen werden koennen wenn ein neuer Tag in der CSV-Datei anfaengt, beginnt bei 0
-//            for (Day day: availableDays){                                                       // fuer jeden Tag der verfügbaren Tage
-//                while ((nextLine = reader.readNext())[0].equals(day.getDate())){                // traversiere Zeilen der CSV-Datei solange die erste Spalte (Datum) gleich dem jeweiligen Tag ist
-//                    if (nextLine[2].equals(day.getWeatherDataList().get(i).getCelsius())){
-//                        day.getWeatherDataList().get(i).setUpdated(false);
-//                    } else {
-//                        day.getWeatherDataList().get(i).setCelsius(nextLine[2]);
-//                        day.getWeatherDataList().get(i).setUpdated(true);
-//                        this.isUpdated = true;
-//                    }
-//                    i++;
-//                }
-//            }
-//
+//            daysfromCSV = reader.readAll();
 //        } catch (IOException e){
 //            e.printStackTrace();
 //        }
+//        String[] tempString;
+//        ListIterator csvIterator = daysfromCSV.listIterator();
+//        while (csvIterator.hasNext()){
+//            tempString = (String[])csvIterator.next();
+//            compareWeatherData(tempString[0], tempString[1], tempString[2]);
+//        }
+
+    }
+
+    private void compareWeatherData(String day, String time, String celsius){
+        Day tempDay = dayAvailabe(day);
+        if (tempDay != null){
+            for (WeatherData weatherData:tempDay.getWeatherDataList()) {
+                if (weatherData.getTime().equals(time) && weatherData.getCelsius().equals(celsius)){
+                    System.out.println("no update necessary");
+                } else if (weatherData.getTime().equals(time) && !(weatherData.getCelsius().equals(celsius)) && !(weatherData.isUpdated())){
+                    System.out.println("update necessary");
+                    weatherData.setCelsius(celsius);
+                    weatherData.setUpdated(true);
+                    updatedDays.add(tempDay);
+                }
+            }
+        }
+    }
+
+    private Day dayAvailabe(String day){
+        for (Day d:availableDays){
+            if (d.getDate().equals(day)){
+                return d;
+            }
+        }
+        return null;
     }
 
     public String printDayWeatherData(String dayString) throws RemoteException {
@@ -142,33 +131,10 @@ public class CSVParser {
         return null;
     }
 
-    public Day dayAvailabe(String day){
-        for (Day d:availableDays){
-            if (d.getDate().equals(day)){
-                return d;
-            }
+    public void resetUpdateStatus(){
+        updatedDays = new ArrayList<>();
+        for (Day day: availableDays) {
+            day.resetWeatherDataUpdateStatus();
         }
-        return null;
     }
-
-    // return and toggle
-    public boolean checkUpdated(){
-        boolean tempUpdate = this.isUpdated;
-        this.isUpdated = !this.isUpdated;
-        return tempUpdate;
-    }
-
-//    public boolean checkConsistency(){
-//        boolean fileHasSameContent = false;
-//        try (FileReader fileReader = new FileReader(fileName)) {
-//            ArrayList<Day> availableDaysCurrent = parseCSVFile(fileReader);
-//            if (availableDaysCurrent.containsAll(availableDays)){
-//                System.out.println("The consistency of the .csv file has not changed");
-//                fileHasSameContent = true;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return fileHasSameContent;
-//    }
 }

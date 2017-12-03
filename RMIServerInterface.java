@@ -1,4 +1,4 @@
-package RMIWeatherClientServer; /**
+/**
  * Created by Empyreans on 15.11.2017.
  */
 
