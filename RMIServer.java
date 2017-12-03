@@ -19,7 +19,6 @@ public class RMIServer extends Observable implements RMIServerInterface, Runnabl
 //      Thread t1 = new Thread(rmiServer);
 //      t1.start();
         rmiServer.run();
-
     }
 
     public RMIServer(){
@@ -72,11 +71,12 @@ public class RMIServer extends Observable implements RMIServerInterface, Runnabl
     public void run() {
         try {
             while (true){
-                Thread.sleep(5000);
                 csvParser.updateCSVFile();
-                if (!clientVector.isEmpty() && !csvParser.updatedDays.isEmpty()){
+                if (!clientVector.isEmpty() && !(csvParser.updatedDays.isEmpty())){
                     notifyObservers();
-                    csvParser.resetUpdateStatus();
+                    break;
+                } else {
+                    Thread.sleep(5000);
                 }
             }
         } catch (InterruptedException e){
